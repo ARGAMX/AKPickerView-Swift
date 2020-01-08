@@ -21,26 +21,32 @@ platform :ios do
 
         desc "Set framework version, creates appropriate git commit, git tag, and pushes all to our local podspec repo."
         desc "version: framework version, required!"
-        lane :deploy do |options|
-                # add actions here: https://docs.fastlane.tools/actions
-                raise "version is required!" unless version = options[:version]
+	lane :deploy do |options|
 
                 ensure_git_status_clean()
 
-                version_bump_podspec(version_number:version )
-                commit_version_bump(include:"AKPickerView-Swift.podspec", message:"AKPickerView-Swift version #{version}") unless Actions.sh("git status --porcelain").empty?
+                version_bump_podspec(options)
+
+                version = lane_context[SharedValues::PODSPEC_VERSION_NUMBER]
+
+                increment_version_number(version_number:version)
+
+                commit_version_bump(xcodeproj:"AKPickerViewSample.xcodeproj", include:"AKPickerView-Swift.podspec", message:"AKPickerView-Swift version #{version}") unless Actions.sh("git status --porcelain").empty?
+
                 push_to_git_remote(force:false)
+
                 add_git_tag(tag:version)
+
                 push_git_tags()
-                begin
-                        pod_push(path: "AKPickerView-Swift.podspec", repo: "CocoaPodsPrivate", allow_warnings:true)
-                rescue Exception => e
-                        output1 = sh("git push --delete origin #{version}")
-                        output2 = sh("git tag -d #{version}")
-                        UI.message("Tags deleted on remote: #{output1} and locally: #{output2}")
-                end
-                
+
+                push_pod
 
         end
+
+        lane :push_pod do |options|
+                pod_push(path: "AKPickerView-Swift.podspec", repo: "urbi-mobility", allow_warnings:true)
+        end
+
+
 
 end
