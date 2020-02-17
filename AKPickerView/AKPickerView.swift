@@ -59,13 +59,15 @@ private class AKCollectionViewCell: UICollectionViewCell {
     var imageView: UIImageView!
     var font = UIFont.systemFont(ofSize: UIFont.systemFontSize)
     var highlightedFont = UIFont.systemFont(ofSize: UIFont.systemFontSize)
-    var _selected: Bool = false {
-        didSet(selected) {
+
+    override var isSelected: Bool {
+        didSet {
+            guard oldValue != isSelected else { return }
             let animation = CATransition()
             animation.type = CATransitionType.fade
             animation.duration = 0.15
             self.label.layer.add(animation, forKey: "")
-            self.label.font = self.isSelected ? self.highlightedFont : self.font
+            self.label.font = isSelected ? self.highlightedFont : self.font
         }
     }
 
@@ -457,13 +459,12 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
 
      :param: item            An integer value which indicates the index of cell.
      :param: animated        True if the scrolling should be animated, false if it should be immediate.
-     :param: notifySelection True if the delegate method should be called, false if not.
      */
     public func selectItem(_ item: Int, animated: Bool) {
         self.collectionView.selectItem(
             at: IndexPath(item: item, section: 0),
             animated: animated,
-            scrollPosition: UICollectionView.ScrollPosition())
+            scrollPosition: .centeredHorizontally)
         self.scrollToItem(item, animated: animated)
         self.selectedItem = item
     }
@@ -536,7 +537,7 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
         } else if let image = self.dataSource?.pickerView?(self, imageForItem: indexPath.item) {
             cell.imageView.image = image
         }
-        cell._selected = (indexPath.item == self.selectedItem)
+        cell.isSelected = (indexPath.item == self.selectedItem)
         return cell
     }
 
@@ -585,14 +586,14 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
     public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         self.delegate?.scrollViewDidEndDecelerating?(scrollView)
         updateSelectedItemIfNecessaryAndNotifyDelegate()
-        scrollToItem(selectedItem, animated: true)
+        selectItem(selectedItem, animated: true)
     }
 
     public func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         self.delegate?.scrollViewDidEndDragging?(scrollView, willDecelerate: decelerate)
         if !decelerate {
             updateSelectedItemIfNecessaryAndNotifyDelegate()
-            scrollToItem(selectedItem, animated: true)
+            selectItem(selectedItem, animated: true)
         }
     }
 
