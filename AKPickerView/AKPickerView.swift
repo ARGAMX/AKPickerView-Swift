@@ -68,12 +68,12 @@ private class AKCollectionViewCell: UICollectionViewCell {
             self.label.font = self.isSelected ? self.highlightedFont : self.font
         }
     }
-    
+
     func initialize() {
         self.layer.isDoubleSided = false
         self.layer.shouldRasterize = true
         self.layer.rasterizationScale = UIScreen.main.scale
-        
+
         self.label = UILabel(frame: self.contentView.bounds)
         self.label.backgroundColor = UIColor.clear
         self.label.textAlignment = .center
@@ -84,24 +84,24 @@ private class AKCollectionViewCell: UICollectionViewCell {
         self.label.font = self.font
         self.label.autoresizingMask = [.flexibleTopMargin, .flexibleLeftMargin, .flexibleBottomMargin, .flexibleRightMargin]
         self.contentView.addSubview(self.label)
-        
+
         self.imageView = UIImageView(frame: self.contentView.bounds)
         self.imageView.backgroundColor = UIColor.clear
         self.imageView.contentMode = .center
         self.imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         self.contentView.addSubview(self.imageView)
     }
-    
+
     init() {
         super.init(frame: CGRect.zero)
         self.initialize()
     }
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         self.initialize()
     }
-    
+
     required init!(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         self.initialize()
@@ -117,34 +117,34 @@ private class AKCollectionViewLayout: UICollectionViewFlowLayout {
     var width: CGFloat!
     var midX: CGFloat!
     var maxAngle: CGFloat!
-    
+
     func initialize() {
         self.sectionInset = UIEdgeInsets(top: 0.0, left: 0.0, bottom: 0.0, right: 0.0)
         self.scrollDirection = .horizontal
         self.minimumLineSpacing = 0.0
     }
-    
+
     override init() {
         super.init()
         self.initialize()
     }
-    
+
     required init!(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         self.initialize()
     }
-    
+
     fileprivate override func prepare() {
         let visibleRect = CGRect(origin: self.collectionView!.contentOffset, size: self.collectionView!.bounds.size)
         self.midX = visibleRect.midX;
         self.width = visibleRect.width / 2;
         self.maxAngle = .pi;
     }
-    
+
     fileprivate override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
         return true
     }
-    
+
     fileprivate override func layoutAttributesForItem(at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
         if let attributes = super.layoutAttributesForItem(at: indexPath)?.copy() as? UICollectionViewLayoutAttributes {
             switch self.delegate.pickerViewStyleForCollectionViewLayout(self) {
@@ -162,10 +162,10 @@ private class AKCollectionViewLayout: UICollectionViewFlowLayout {
                 return attributes;
             }
         }
-        
+
         return nil
     }
-    
+
     private func layoutAttributesForElementsInRect(_ rect: CGRect) -> [AnyObject]? {
         switch self.delegate.pickerViewStyleForCollectionViewLayout(self) {
         case .flat:
@@ -181,7 +181,7 @@ private class AKCollectionViewLayout: UICollectionViewFlowLayout {
             return attributes
         }
     }
-    
+
 }
 
 // MARK: AKPickerViewDelegateIntercepter
@@ -192,12 +192,12 @@ private class AKCollectionViewLayout: UICollectionViewFlowLayout {
 private class AKPickerViewDelegateIntercepter: NSObject, UICollectionViewDelegate {
     weak var pickerView: AKPickerView?
     weak var delegate: UIScrollViewDelegate?
-    
+
     init(pickerView: AKPickerView, delegate: UIScrollViewDelegate?) {
         self.pickerView = pickerView
         self.delegate = delegate
     }
-    
+
     fileprivate override func forwardingTarget(for aSelector: Selector) -> Any? {
         if self.pickerView!.responds(to: aSelector) {
             return self.pickerView
@@ -207,7 +207,7 @@ private class AKPickerViewDelegateIntercepter: NSObject, UICollectionViewDelegat
             return nil
         }
     }
-    
+
     fileprivate override func responds(to aSelector: Selector) -> Bool {
         if self.pickerView!.responds(to: aSelector) {
             return true
@@ -217,7 +217,7 @@ private class AKPickerViewDelegateIntercepter: NSObject, UICollectionViewDelegat
             return super.responds(to: aSelector)
         }
     }
-    
+
 }
 
 // MARK: - AKPickerView
@@ -226,7 +226,7 @@ private class AKPickerViewDelegateIntercepter: NSObject, UICollectionViewDelegat
  Horizontal picker view. This is just a subclass of UIView, contains a UICollectionView.
  */
 public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, AKCollectionViewLayoutDelegate {
-    
+
     // MARK: - Properties
     // MARK: Readwrite Properties
     /// Readwrite. Data source of picker view.
@@ -239,22 +239,25 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
     }
     /// Readwrite. A font which used in NOT selected cells.
     @IBInspectable public lazy var font: UIFont = UIFont.systemFont(ofSize: 20)
-    
+
     /// Readwrite. A font which used in selected cells.
     @IBInspectable public lazy var highlightedFont: UIFont = UIFont.boldSystemFont(ofSize: 20)
-    
+
     /// Readwrite. A color of the text on NOT selected cells.
     @IBInspectable public lazy var textColor: UIColor = UIColor.darkGray
-    
+
     /// Readwrite. A color of the text on selected cells.
     @IBInspectable public lazy var highlightedTextColor: UIColor = UIColor.black
-    
+
     /// Readwrite. A float value which indicates the spacing between cells.
     @IBInspectable public var interitemSpacing: CGFloat = 0.0
-    
+
+    /// Readwrite. A flag indicating if the picker view calls the delegate continuously during scrolling
+    @IBInspectable public var continuous: Bool = false
+
     /// Readwrite. The style of the picker view. See AKPickerViewStyle.
     public var pickerViewStyle = AKPickerViewStyle.wheel
-    
+
     /// Readwrite. A float value which determines the perspective representation which used when using AKPickerViewStyle.Wheel style.
     @IBInspectable public var viewDepth: CGFloat = 1000.0 {
         didSet {
@@ -283,7 +286,7 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
                 }()
         }
     }
-    
+
     // MARK: Readonly Properties
     /// Readonly. Index of currently selected item.
     public private(set) var selectedItem: Int = 0
@@ -293,7 +296,7 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
             return self.collectionView.contentOffset
         }
     }
-    
+
     // MARK: Private Properties
     /// Private. A UICollectionView which shows contents on cells.
     fileprivate var collectionView: UICollectionView!
@@ -305,7 +308,7 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
         layout.delegate = self
         return layout
     }
-    
+
     // MARK: - Functions
     // MARK: View Lifecycle
     /**
@@ -323,34 +326,34 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
             AKCollectionViewCell.self,
             forCellWithReuseIdentifier: NSStringFromClass(AKCollectionViewCell.self))
         self.addSubview(self.collectionView)
-        
+
         self.intercepter = AKPickerViewDelegateIntercepter(pickerView: self, delegate: self.delegate)
         self.collectionView.delegate = self.intercepter
-        
+
         self.maskDisabled = self.maskDisabled == false ? false : self.maskDisabled
     }
-    
+
     public init() {
         super.init(frame: CGRect.zero)
         self.initialize()
     }
-    
+
     public override init(frame: CGRect) {
         super.init(frame: frame)
         self.initialize()
     }
-    
+
     public required init!(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         self.initialize()
     }
-    
+
     deinit {
         self.collectionView.delegate = nil
     }
-    
+
     // MARK: Layout
-    
+
     open override func layoutSubviews() {
         super.layoutSubviews()
         if self.dataSource != nil && self.dataSource!.numberOfItemsInPickerView(self) > 0 {
@@ -359,16 +362,16 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
         }
         self.collectionView.layer.mask?.frame = self.collectionView.bounds
     }
-    
+
     open override var intrinsicContentSize : CGSize {
         return CGSize(width: UIView.noIntrinsicMetric, height: max(self.font.lineHeight, self.highlightedFont.lineHeight))
     }
-    
+
     // MARK: Calculation Functions
-    
+
     /**
      Private. Used to calculate bounding size of given string with picker view's font and highlightedFont
-     
+
      :param: string A NSString to calculate size
      :returns: A CGSize which contains given string just.
      */
@@ -379,10 +382,10 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
             width: ceil(max(size.width, highlightedSize.width)),
             height: ceil(max(size.height, highlightedSize.height)))
     }
-    
+
     /**
      Private. Used to calculate the x-coordinate of the content offset of specified item.
-     
+
      :param: item An integer value which indicates the index of cell.
      :returns: An x-coordinate of the cell whose index is given one.
      */
@@ -396,7 +399,7 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
                 sizeForItemAt: indexPath)
             offset += cellSize.width
         }
-        
+
         let firstIndexPath = IndexPath(item: 0, section: 0)
         let firstSize = self.collectionView(
             self.collectionView,
@@ -408,10 +411,10 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
             layout: self.collectionView.collectionViewLayout,
             sizeForItemAt: selectedIndexPath)
         offset -= (firstSize.width - selectedSize.width) / 2.0
-        
+
         return offset
     }
-    
+
     // MARK: View Controls
     /**
      Reload the picker view's contents and styles. Call this method always after any property is changed.
@@ -421,13 +424,13 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
         self.collectionView.collectionViewLayout.invalidateLayout()
         self.collectionView.reloadData()
         if self.dataSource != nil && self.dataSource!.numberOfItemsInPickerView(self) > 0 {
-            self.selectItem(self.selectedItem, animated: false, notifySelection: false)
+            self.selectItem(self.selectedItem, animated: false)
         }
     }
-    
+
     /**
      Move to the cell whose index is given one without selection change.
-     
+
      :param: item     An integer value which indicates the index of cell.
      :param: animated True if the scrolling should be animated, false if it should be immediate.
      */
@@ -448,47 +451,43 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
                 animated: animated)
         }
     }
-    
-    /**
-     Select a cell whose index is given one and move to it.
-     
-     :param: item     An integer value which indicates the index of cell.
-     :param: animated True if the scrolling should be animated, false if it should be immediate.
-     */
-    public func selectItem(_ item: Int, animated: Bool = false) {
-        self.selectItem(item, animated: animated, notifySelection: true)
-    }
-    
+
     /**
      Private. Select a cell whose index is given one and move to it, with specifying whether it calls delegate method.
-     
+
      :param: item            An integer value which indicates the index of cell.
      :param: animated        True if the scrolling should be animated, false if it should be immediate.
      :param: notifySelection True if the delegate method should be called, false if not.
      */
-    fileprivate func selectItem(_ item: Int, animated: Bool, notifySelection: Bool) {
+    public func selectItem(_ item: Int, animated: Bool) {
         self.collectionView.selectItem(
             at: IndexPath(item: item, section: 0),
             animated: animated,
             scrollPosition: UICollectionView.ScrollPosition())
         self.scrollToItem(item, animated: animated)
         self.selectedItem = item
-        if notifySelection {
-            self.delegate?.pickerView?(self, didSelectItem: item)
-        }
     }
-    
+
     // MARK: Delegate Handling
     /**
      Private.
      */
-    fileprivate func didEndScrolling() {
+    fileprivate func updateSelectedItemIfNecessaryAndNotifyDelegate() {
+        let centeredItem = centeredItemBasedOnScrollPosition()
+
+        guard centeredItem != selectedItem else { return }
+        selectedItem = centeredItem
+        delegate?.pickerView?(self, didSelectItem: selectedItem)
+    }
+
+    private func centeredItemBasedOnScrollPosition() -> Int {
         switch self.pickerViewStyle {
         case .flat:
             let center = self.convert(self.collectionView.center, to: self.collectionView)
-            if let indexPath = self.collectionView.indexPathForItem(at: center) {
-                self.selectItem(indexPath.item, animated: true, notifySelection: true)
+            guard let indexPath = self.collectionView.indexPathForItem(at: center), indexPath.item != selectedItem else {
+                return selectedItem
             }
+            return indexPath.item
         case .wheel:
             if let numberOfItems = self.dataSource?.numberOfItemsInPickerView(self) {
                 for i in 0 ..< numberOfItems {
@@ -498,23 +497,26 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
                         layout: self.collectionView.collectionViewLayout,
                         sizeForItemAt: indexPath)
                     if self.offsetForItem(i) + cellSize.width / 2 > self.collectionView.contentOffset.x {
-                        self.selectItem(i, animated: true, notifySelection: true)
+                        if i != selectedItem {
+                            return i
+                        }
                         break
                     }
                 }
             }
         }
+        return selectedItem
     }
-    
+
     // MARK: UICollectionViewDataSource
     public func numberOfSections(in collectionView: UICollectionView) -> Int {
         return self.dataSource != nil && self.dataSource!.numberOfItemsInPickerView(self) > 0 ? 1 : 0
     }
-    
+
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return self.dataSource != nil ? self.dataSource!.numberOfItemsInPickerView(self) : 0
     }
-    
+
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: NSStringFromClass(AKCollectionViewCell.self), for: indexPath) as! AKCollectionViewCell
         if let title = self.dataSource?.pickerView?(self, titleForItem: indexPath.item) {
@@ -537,7 +539,7 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
         cell._selected = (indexPath.item == self.selectedItem)
         return cell
     }
-    
+
     // MARK: UICollectionViewDelegateFlowLayout
     public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         var size = CGSize(width: self.interitemSpacing, height: collectionView.bounds.size.height)
@@ -551,15 +553,15 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
         }
         return size
     }
-    
+
     public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
         return 0.0
     }
-    
+
     public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
         return 0.0
     }
-    
+
     public func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
         let number = self.collectionView(collectionView, numberOfItemsInSection: section)
         let firstIndexPath = IndexPath(item: 0, section: section)
@@ -571,37 +573,45 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
             bottom: 0, right: (collectionView.bounds.size.width - lastSize.width) / 2
         )
     }
-    
+
     // MARK: UICollectionViewDelegate
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        self.selectItem(indexPath.item, animated: true)
+        selectItem(indexPath.item, animated: true)
+        updateSelectedItemIfNecessaryAndNotifyDelegate()
     }
-    
+
     // MARK: UIScrollViewDelegate
+
     public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         self.delegate?.scrollViewDidEndDecelerating?(scrollView)
-        self.didEndScrolling()
+        updateSelectedItemIfNecessaryAndNotifyDelegate()
+        scrollToItem(selectedItem, animated: true)
     }
-    
+
     public func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         self.delegate?.scrollViewDidEndDragging?(scrollView, willDecelerate: decelerate)
         if !decelerate {
-            self.didEndScrolling()
+            updateSelectedItemIfNecessaryAndNotifyDelegate()
+            scrollToItem(selectedItem, animated: true)
         }
     }
-    
+
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
         self.delegate?.scrollViewDidScroll?(scrollView)
         CATransaction.begin()
         CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
         self.collectionView.layer.mask?.frame = self.collectionView.bounds
         CATransaction.commit()
+
+        guard continuous, scrollView.isDragging else { return }
+
+        updateSelectedItemIfNecessaryAndNotifyDelegate()
     }
-    
+
     // MARK: AKCollectionViewLayoutDelegate
     fileprivate func pickerViewStyleForCollectionViewLayout(_ layout: AKCollectionViewLayout) -> AKPickerViewStyle {
         return self.pickerViewStyle
     }
-    
+
 }
 
