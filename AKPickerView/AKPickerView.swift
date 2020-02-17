@@ -470,17 +470,6 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
     }
 
     // MARK: Delegate Handling
-    /**
-     Private.
-     */
-    fileprivate func updateSelectedItemIfNecessaryAndNotifyDelegate() {
-        let centeredItem = centeredItemBasedOnScrollPosition()
-
-        guard centeredItem != selectedItem else { return }
-        selectedItem = centeredItem
-        delegate?.pickerView?(self, didSelectItem: selectedItem)
-    }
-
     private func centeredItemBasedOnScrollPosition() -> Int {
         switch self.pickerViewStyle {
         case .flat:
@@ -578,22 +567,28 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
     // MARK: UICollectionViewDelegate
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         selectItem(indexPath.item, animated: true)
-        updateSelectedItemIfNecessaryAndNotifyDelegate()
+        delegate?.pickerView?(self, didSelectItem: selectedItem)
     }
 
     // MARK: UIScrollViewDelegate
 
     public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         self.delegate?.scrollViewDidEndDecelerating?(scrollView)
-        updateSelectedItemIfNecessaryAndNotifyDelegate()
-        selectItem(selectedItem, animated: true)
+        let item = centeredItemBasedOnScrollPosition()
+        guard item != selectedItem else { return }
+
+        selectItem(item, animated: true)
+        delegate?.pickerView?(self, didSelectItem: selectedItem)
     }
 
     public func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         self.delegate?.scrollViewDidEndDragging?(scrollView, willDecelerate: decelerate)
         if !decelerate {
-            updateSelectedItemIfNecessaryAndNotifyDelegate()
-            selectItem(selectedItem, animated: true)
+            let item = centeredItemBasedOnScrollPosition()
+            guard item != selectedItem else { return }
+            
+            selectItem(item, animated: true)
+            delegate?.pickerView?(self, didSelectItem: selectedItem)
         }
     }
 
@@ -601,12 +596,16 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
         self.delegate?.scrollViewDidScroll?(scrollView)
         CATransaction.begin()
         CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
-        self.collectionView.layer.mask?.frame = self.collectionView.bounds
+        collectionView.layer.mask?.frame = self.collectionView.bounds
         CATransaction.commit()
-
+        collectionView.collectionViewLayout.invalidateLayout()
         guard continuous, scrollView.isDragging else { return }
 
-        updateSelectedItemIfNecessaryAndNotifyDelegate()
+        let item = centeredItemBasedOnScrollPosition()
+        guard item != selectedItem else { return }
+
+        selectItem(item, animated: true)
+        delegate?.pickerView?(self, didSelectItem: selectedItem)
     }
 
     // MARK: AKCollectionViewLayoutDelegate
