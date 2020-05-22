@@ -59,6 +59,8 @@ private class AKCollectionViewCell: UICollectionViewCell {
     var imageView: UIImageView!
     var font = UIFont.systemFont(ofSize: UIFont.systemFontSize)
     var highlightedFont = UIFont.systemFont(ofSize: UIFont.systemFontSize)
+    var regularTextColor = UIColor.black
+    var highlightedTextColor = UIColor.black
 
     override var isSelected: Bool {
         didSet {
@@ -68,6 +70,11 @@ private class AKCollectionViewCell: UICollectionViewCell {
             animation.duration = 0.15
             self.label.layer.add(animation, forKey: "")
             self.label.font = isSelected ? self.highlightedFont : self.font
+            self.label.textColor = isSelected ? self.highlightedTextColor : self.regularTextColor
+            let sel = isSelected
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                self.label.textColor = sel ? self.highlightedTextColor : self.regularTextColor
+            }
         }
     }
 
@@ -82,7 +89,7 @@ private class AKCollectionViewCell: UICollectionViewCell {
         self.label.textColor = UIColor.gray
         self.label.numberOfLines = 1
         self.label.lineBreakMode = .byTruncatingTail
-        self.label.highlightedTextColor = UIColor.black
+        //self.label.highlightedTextColor = UIColor.black
         self.label.font = self.font
         self.label.autoresizingMask = [.flexibleTopMargin, .flexibleLeftMargin, .flexibleBottomMargin, .flexibleRightMargin]
         self.contentView.addSubview(self.label)
@@ -460,7 +467,7 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
      :param: item            An integer value which indicates the index of cell.
      :param: animated        True if the scrolling should be animated, false if it should be immediate.
      */
-    public func selectItem(_ item: Int, animated: Bool) {
+    public func selectItem(_ item: Int, animated: Bool = false) {
         self.collectionView.selectItem(
             at: IndexPath(item: item, section: 0),
             animated: animated,
@@ -512,10 +519,11 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
         if let title = self.dataSource?.pickerView?(self, titleForItem: indexPath.item) {
             cell.label.text = title
             cell.label.textColor = self.textColor
-            cell.label.highlightedTextColor = self.highlightedTextColor
             cell.label.font = self.font
             cell.font = self.font
             cell.highlightedFont = self.highlightedFont
+            cell.highlightedTextColor = self.highlightedTextColor
+            cell.regularTextColor = self.textColor
             cell.label.bounds = CGRect(origin: CGPoint.zero, size: self.sizeForString(title as NSString))
             if let delegate = self.delegate {
                 delegate.pickerView?(self, configureLabel: cell.label, forItem: indexPath.item)
