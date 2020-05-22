@@ -39,6 +39,7 @@ public enum AKPickerViewStyle {
     @objc optional func pickerView(_ pickerView: AKPickerView, didSelectItem item: Int)
     @objc optional func pickerView(_ pickerView: AKPickerView, marginForItem item: Int) -> CGSize
     @objc optional func pickerView(_ pickerView: AKPickerView, configureLabel label: UILabel, forItem item: Int)
+    @objc optional func pickerView(_ pickerView: AKPickerView, cellSizeFor string: String, with font: UIFont) -> CGSize
 }
 
 // MARK: - Private Classes and Protocols
@@ -385,11 +386,15 @@ public class AKPickerView: UIView, UICollectionViewDataSource, UICollectionViewD
      :returns: A CGSize which contains given string just.
      */
     fileprivate func sizeForString(_ string: NSString) -> CGSize {
-        let size = string.size(withAttributes: [NSAttributedString.Key.font: self.font])
-        let highlightedSize = string.size(withAttributes: [NSAttributedString.Key.font: self.highlightedFont])
-        return CGSize(
-            width: ceil(max(size.width, highlightedSize.width)),
-            height: ceil(max(size.height, highlightedSize.height)))
+        let biggerFont = self.font.pointSize > self.highlightedFont.pointSize ? self.font : self.highlightedFont
+        if let size = delegate?.pickerView?(self, cellSizeFor: string as String, with: biggerFont) {
+            return size
+        }
+        else {
+            let size = string.size(withAttributes: [NSAttributedString.Key.font: biggerFont])
+            let result = CGSize(width: ceil(size.width), height: ceil(size.height))
+            return result
+        }
     }
 
     /**
